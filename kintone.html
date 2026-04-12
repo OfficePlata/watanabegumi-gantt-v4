@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>工事詳細 ｜ kintone連携</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Noto Sans JP','Hiragino Kaku Gothic ProN',sans-serif; background:#f0f2f5; min-height:100vh; }
+
+/* App shell */
+.app-header { background:#1565c0; color:#fff; padding:12px 20px; display:flex; align-items:center; gap:12px; box-shadow:0 2px 8px rgba(0,0,0,0.2); }
+.back-btn { background:rgba(255,255,255,0.18); border:none; color:#fff; padding:7px 14px; border-radius:7px; font-family:inherit; font-size:13px; font-weight:700; cursor:pointer; transition:background 0.12s; white-space:nowrap; }
+.back-btn:hover { background:rgba(255,255,255,0.28); }
+.hdr-info { flex:1; min-width:0; }
+.hdr-name { font-size:18px; font-weight:900; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.hdr-id { font-size:12px; opacity:0.75; margin-top:2px; }
+.status-badge { padding:5px 14px; border-radius:20px; font-size:12px; font-weight:700; white-space:nowrap; }
+.sb-active   { background:#43a047; color:#fff; }
+.sb-delayed  { background:#e53935; color:#fff; }
+.sb-upcoming { background:#fff; color:#1565c0; }
+.sb-completed{ background:rgba(255,255,255,0.3); color:#fff; }
+
+/* Meta bar */
+.meta-bar { background:#1976d2; color:rgba(255,255,255,0.92); padding:8px 20px; display:flex; gap:20px; flex-wrap:wrap; font-size:12px; }
+.meta-item { display:flex; align-items:center; gap:5px; }
+.meta-label { opacity:0.7; }
+.meta-val { font-weight:700; }
+
+/* Tab nav */
+.tab-nav { background:#fff; border-bottom:2px solid #e0e0e0; display:flex; padding:0 20px; }
+.tab-btn { padding:14px 20px; border:none; background:none; font-family:inherit; font-size:14px; font-weight:700; color:#888; cursor:pointer; border-bottom:3px solid transparent; margin-bottom:-2px; transition:all 0.15s; white-space:nowrap; }
+.tab-btn:hover { color:#1565c0; }
+.tab-btn.active { color:#1565c0; border-bottom-color:#1565c0; }
+
+/* Panes */
+.tab-pane { display:none; padding:20px; max-width:1200px; margin:0 auto; }
+.tab-pane.active { display:block; }
+
+/* Detail pane */
+.progress-card { background:#fff; border-radius:10px; padding:18px 20px; box-shadow:0 1px 4px rgba(0,0,0,0.08); margin-bottom:16px; }
+.progress-card h3 { font-size:13px; color:#888; font-weight:600; margin-bottom:10px; }
+.prog-bar-wrap { background:#e0e0e0; border-radius:8px; height:20px; overflow:hidden; margin-bottom:6px; }
+.prog-bar-fill { height:100%; border-radius:8px; display:flex; align-items:center; padding-left:8px; font-size:11px; font-weight:700; color:#fff; transition:width 0.5s; }
+.prog-label { display:flex; justify-content:space-between; font-size:12px; color:#666; }
+.info-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:12px; }
+.info-card { background:#fff; border-radius:10px; padding:16px; box-shadow:0 1px 4px rgba(0,0,0,0.08); }
+.info-card-label { font-size:11px; color:#999; font-weight:600; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.05em; }
+.info-card-val { font-size:15px; font-weight:700; color:#222; }
+.section-title { font-size:14px; font-weight:800; color:#333; margin:20px 0 10px; display:flex; align-items:center; gap:8px; }
+.section-title::before { content:''; display:block; width:4px; height:16px; background:#1565c0; border-radius:2px; }
+.cam-section { background:#fff; border-radius:10px; padding:18px 20px; box-shadow:0 1px 4px rgba(0,0,0,0.08); display:flex; align-items:center; gap:16px; }
+.cam-live-btn { width:48px; height:48px; border-radius:50%; border:none; background:#c62828; cursor:pointer; display:flex; align-items:center; justify-content:center; position:relative; flex-shrink:0; box-shadow:0 3px 10px rgba(198,40,40,0.4); }
+.cam-live-btn::before { content:''; position:absolute; inset:-6px; border-radius:50%; border:2.5px solid rgba(198,40,40,0.45); animation:camring 1.8s ease-in-out infinite; }
+@keyframes camring{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.35);opacity:0}}
+.cam-info h4 { font-size:14px; font-weight:700; color:#222; }
+.cam-info p { font-size:12px; color:#888; margin-top:2px; }
+
+/* Schedule pane */
+.schedule-header { display:grid; gap:0; margin-bottom:2px; }
+.sch-col-label { display:grid; grid-template-columns:180px 90px 90px 1fr 80px; gap:0; background:#e8eaf6; border-radius:6px 6px 0 0; font-size:11px; font-weight:700; color:#555; }
+.sch-col-label div { padding:8px 10px; border-right:1px solid #ddd; }
+.sch-col-label div:last-child { border-right:none; }
+.phase-row { display:grid; grid-template-columns:180px 90px 90px 1fr 80px; gap:0; border:1px solid #e8e8e8; border-top:none; background:#fff; cursor:pointer; transition:background 0.12s; }
+.phase-row:first-child { border-top:1px solid #e8e8e8; }
+.phase-row:hover { background:#f5f8ff; }
+.phase-row.expanded { background:#f0f4ff; }
+.phase-cell { padding:10px 10px; border-right:1px solid #e8e8e8; font-size:13px; display:flex; align-items:center; }
+.phase-cell:last-child { border-right:none; }
+.phase-name { font-weight:700; gap:6px; }
+.phase-name .expand-icon { font-size:10px; color:#1565c0; transition:transform 0.15s; }
+.phase-row.expanded .expand-icon { transform:rotate(90deg); }
+.phase-date { font-size:12px; color:#555; }
+.phase-chart { position:relative; height:36px; background:#f5f5f5; border-radius:4px; overflow:hidden; }
+.phase-bar { position:absolute; top:4px; height:18px; border-radius:3px; }
+.phase-bar-done { position:absolute; top:4px; left:0; height:18px; border-radius:3px 0 0 3px; opacity:0.7; }
+.phase-status-cell { justify-content:center; }
+.phase-status { padding:3px 9px; border-radius:4px; font-size:11px; font-weight:700; white-space:nowrap; }
+.ps-done { background:#e8f5e9; color:#2e7d32; }
+.ps-active { background:#e3f2fd; color:#1565c0; }
+.ps-plan { background:#f5f5f5; color:#888; }
+.ps-delayed { background:#ffebee; color:#c62828; }
+
+/* WBS sub-rows */
+.wbs-container { display:none; background:#f8f9ff; border:1px solid #e0e7ff; border-top:none; }
+.wbs-container.open { display:block; }
+.wbs-header-row { display:grid; grid-template-columns:30px 160px 90px 90px 1fr 80px; gap:0; background:#ede7f6; font-size:11px; font-weight:700; color:#555; }
+.wbs-header-row div { padding:6px 8px; border-right:1px solid #ddd; }
+.wbs-row { display:grid; grid-template-columns:30px 160px 90px 90px 1fr 80px; gap:0; border-top:1px solid #e8e8e8; background:#fff; }
+.wbs-cell { padding:8px 8px; border-right:1px solid #e8e8e8; font-size:12px; display:flex; align-items:center; }
+.wbs-cell:last-child { border-right:none; }
+.wbs-indent { justify-content:center; color:#bbb; font-size:14px; }
+
+/* Timeline ruler */
+.timeline-ruler { position:relative; height:22px; background:#eef0f4; margin-bottom:0; border-radius:4px 4px 0 0; overflow:hidden; }
+.timeline-mark { position:absolute; top:0; bottom:0; width:1px; background:#ccc; }
+.timeline-mark span { position:absolute; top:4px; left:2px; font-size:9px; color:#888; white-space:nowrap; }
+.today-line { position:absolute; top:0; bottom:0; width:2px; background:rgba(230,81,0,0.6); z-index:2; }
+
+/* Report pane */
+.report-actions { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+.btn-primary { padding:8px 18px; background:#1565c0; color:#fff; border:none; border-radius:8px; font-family:inherit; font-size:13px; font-weight:700; cursor:pointer; transition:background 0.12s; }
+.btn-primary:hover { background:#1976d2; }
+.report-count { font-size:13px; color:#888; }
+.report-count b { color:#333; }
+table.data-table { width:100%; border-collapse:collapse; background:#fff; border-radius:10px; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,0.08); font-size:13px; }
+table.data-table thead { background:#f5f5f5; }
+table.data-table th { padding:10px 12px; text-align:left; font-weight:700; color:#555; font-size:12px; border-bottom:2px solid #e0e0e0; white-space:nowrap; }
+table.data-table td { padding:10px 12px; border-bottom:1px solid #f0f0f0; vertical-align:top; }
+table.data-table tr:last-child td { border-bottom:none; }
+table.data-table tr:hover td { background:#f8f9ff; }
+.weather-badge { display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:700; }
+.w-fine { background:#fff9e6; color:#f57f17; }
+.w-cloud { background:#f5f5f5; color:#555; }
+.w-rain { background:#e3f2fd; color:#1565c0; }
+.alert-badge { display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:700; background:#ffebee; color:#c62828; }
+.note-badge { display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:700; background:#e8f5e9; color:#2e7d32; }
+
+/* Worker pane */
+.worker-actions { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px; }
+.worker-search { padding:8px 12px; border:1.5px solid #ccc; border-radius:8px; font-family:inherit; font-size:13px; width:220px; outline:none; }
+.worker-search:focus { border-color:#1565c0; }
+.worker-count { font-size:13px; color:#888; }
+.cred-ok { display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:700; background:#e8f5e9; color:#2e7d32; }
+.cred-exp { display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:700; background:#fff8e1; color:#f57f17; }
+.cred-ng { display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:700; background:#ffebee; color:#c62828; }
+.avatar { width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:#fff; flex-shrink:0; }
+
+/* Camera modal */
+#camModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:9000;align-items:center;justify-content:center;}
+.cam-modal-inner{background:#111;border-radius:12px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.7);max-width:900px;width:92vw;}
+.cam-modal-head{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#1a1a1a;}
+#camTitle{color:#fff;font-size:15px;font-weight:700;}
+.cam-close{background:none;border:none;color:#aaa;font-size:26px;cursor:pointer;line-height:1;padding:0 4px;}
+.cam-close:hover{color:#fff;}
+.cam-frame-wrap{position:relative;padding-bottom:56.25%;}
+#camFrame{position:absolute;inset:0;width:100%;height:100%;border:none;}
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <button class="back-btn" onclick="location.href='index.html'">← ホワイトボードへ</button>
+  <div class="hdr-info">
+    <div class="hdr-name" id="hdrName">---</div>
+    <div class="hdr-id" id="hdrId"></div>
+  </div>
+  <span class="status-badge" id="hdrStatus"></span>
+</div>
+
+<div class="meta-bar" id="metaBar"></div>
+
+<div class="tab-nav">
+  <button class="tab-btn" data-tab="detail">詳細</button>
+  <button class="tab-btn" data-tab="schedule">工程表</button>
+  <button class="tab-btn" data-tab="report">日報</button>
+  <button class="tab-btn" data-tab="worker">作業員</button>
+</div>
+
+<div class="tab-pane" id="pane-detail"></div>
+<div class="tab-pane" id="pane-schedule"></div>
+<div class="tab-pane" id="pane-report"></div>
+<div class="tab-pane" id="pane-worker"></div>
+
+<div id="camModal">
+  <div class="cam-modal-inner">
+    <div class="cam-modal-head">
+      <span id="camTitle"></span>
+      <button class="cam-close" onclick="closeCam()">✕</button>
+    </div>
+    <div class="cam-frame-wrap">
+      <iframe id="camFrame" src="" allowfullscreen allow="autoplay; encrypted-media"></iframe>
+    </div>
+  </div>
+</div>
+
+<script>
+const P=[
+  {id:"KJ-2026-001",name:"鹿児島市役所 本庁舎改修工事",   client:"鹿児島市",          mgr:"田中 太郎",status:"active",   s:"2026-02-10",e:"2026-05-30",prog:45, budget:158000000,spent:68500000, cat:"公共建築",loc:"鹿児島市山下町11-1",   wk:24,cam:"https://www.youtube.com/embed/Hmmk0eYn0cw?autoplay=1"},
+  {id:"KJ-2026-002",name:"天文館通り 道路拡幅工事",        client:"鹿児島県",          mgr:"山田 花子",status:"active",   s:"2026-01-15",e:"2026-04-15",prog:68, budget:92000000, spent:61200000, cat:"土木",    loc:"鹿児島市千日町",      wk:18},
+  {id:"KJ-2026-003",name:"桜島フェリーターミナル 耐震補強",client:"鹿児島市船舶部",    mgr:"佐藤 健一",status:"delayed",  s:"2025-11-01",e:"2026-04-14",prog:52, budget:245000000,spent:142000000,cat:"港湾",    loc:"鹿児島市桜島横山町",  wk:32,cam:"https://www.youtube.com/embed/Hmmk0eYn0cw?autoplay=1"},
+  {id:"KJ-2026-004",name:"城山展望台 休憩施設新築",        client:"鹿児島市観光課",    mgr:"中村 美咲",status:"upcoming", s:"2026-04-01",e:"2026-08-31",prog:0,  budget:78000000, spent:0,        cat:"建築",    loc:"鹿児島市城山町",      wk:0},
+  {id:"KJ-2026-005",name:"甲突川 護岸修繕工事",            client:"鹿児島県土木部",    mgr:"鈴木 一郎",status:"active",   s:"2026-03-01",e:"2026-06-30",prog:18, budget:64000000, spent:9800000,  cat:"河川",    loc:"鹿児島市甲突町",      wk:12,cam:"https://www.youtube.com/embed/Hmmk0eYn0cw?autoplay=1"},
+  {id:"KJ-2026-006",name:"鴨池運動公園 照明LED化",         client:"鹿児島市",          mgr:"高橋 誠",  status:"completed",s:"2025-12-01",e:"2026-02-28",prog:100,budget:35000000, spent:33200000, cat:"電気設備",loc:"鹿児島市与次郎2丁目", wk:0},
+  {id:"KJ-2026-007",name:"谷山駅前 再開発ビル基礎工事",    client:"谷山駅前再開発組合",mgr:"伊藤 大輔",status:"active",   s:"2026-01-20",e:"2026-07-31",prog:30, budget:420000000,spent:118000000,cat:"建築",    loc:"鹿児島市谷山中央1丁目",wk:45,cam:"https://www.youtube.com/embed/Hmmk0eYn0cw?autoplay=1"},
+  {id:"KJ-2026-008",name:"指宿スカイライン 法面補修",       client:"NEXCO西日本",       mgr:"渡辺 裕子",status:"upcoming", s:"2026-04-15",e:"2026-06-15",prog:0,  budget:52000000, spent:0,        cat:"道路",    loc:"鹿児島市田上8丁目",   wk:0},
+];
+const SL={active:'施工中',upcoming:'着工予定',delayed:'遅延',completed:'完了'};
+const STATUS_COLORS={active:'#1565c0',delayed:'#c62828',upcoming:'#2e7d32',completed:'#888'};
+
+const PHASES={
+  'KJ-2026-001':[
+    {name:'基礎工事',      s:'2026-02-10',e:'2026-02-28',prog:100,worker:'佐々木 大輔',status:'done'},
+    {name:'躯体工事',      s:'2026-02-21',e:'2026-03-20',prog:100,worker:'田中 太郎', status:'done'},
+    {name:'解体撤去工事',  s:'2026-02-22',e:'2026-03-05',prog:100,worker:'山本 健',   status:'done'},
+    {name:'2F内装工事',    s:'2026-03-06',e:'2026-03-31',prog:75, worker:'田中 太郎', status:'active',wbs:[
+      {name:'クロス貼り（壁）',  s:'2026-03-06',e:'2026-03-15',prog:100,worker:'田中 太郎'},
+      {name:'フローリング施工',  s:'2026-03-10',e:'2026-03-22',prog:75, worker:'山田 花子'},
+      {name:'天井ボード取付',    s:'2026-03-13',e:'2026-03-20',prog:50, worker:'鈴木 一郎'},
+      {name:'建具・ドア取付',    s:'2026-03-18',e:'2026-03-28',prog:20, worker:'田中 太郎'},
+      {name:'塗装仕上げ',        s:'2026-03-25',e:'2026-03-31',prog:0,  worker:'中村 美咲'},
+    ]},
+    {name:'3F内装工事',    s:'2026-04-01',e:'2026-04-30',prog:0, worker:'中村 美咲',status:'plan'},
+    {name:'4F内装工事',    s:'2026-04-01',e:'2026-05-20',prog:0, worker:'佐藤 健一',status:'plan'},
+    {name:'確認検査・引渡',s:'2026-05-21',e:'2026-05-30',prog:0, worker:'田中 太郎',status:'plan'},
+  ],
+  'KJ-2026-002':[
+    {name:'仮設工事',      s:'2026-01-15',e:'2026-01-25',prog:100,worker:'山田 花子', status:'done'},
+    {name:'既設撤去',      s:'2026-01-20',e:'2026-02-10',prog:100,worker:'田中 太郎', status:'done'},
+    {name:'路盤工事',      s:'2026-02-05',e:'2026-03-10',prog:100,worker:'山田 花子', status:'done'},
+    {name:'舗装工事',      s:'2026-03-01',e:'2026-04-05',prog:75, worker:'山田 花子', status:'active'},
+    {name:'区画線・復旧',  s:'2026-04-05',e:'2026-04-15',prog:0,  worker:'山田 花子', status:'plan'},
+  ],
+};
+function getPhases(id){return PHASES[id]||[{name:'基礎工事',s:P.find(p=>p.id===id)?.s||'2026-01-01',e:P.find(p=>p.id===id)?.e||'2026-12-31',prog:P.find(p=>p.id===id)?.prog||0,worker:P.find(p=>p.id===id)?.mgr||'',status:P.find(p=>p.id===id)?.status==='completed'?'done':'active'}];}
+
+const WORKERS=[
+  {id:'W01',name:'田中 太郎',  role:'現場代理人',dept:'建築部',color:'#1565c0',koji:'KJ-2026-001,KJ-2026-002',cert:'1級土木施工管理技士',certOk:true,hire:'2010年'},
+  {id:'W02',name:'山田 花子',  role:'現場代理人',dept:'土木部',color:'#00838f',koji:'KJ-2026-002,KJ-2026-003',cert:'1級土木施工管理技士',certOk:true,hire:'2013年'},
+  {id:'W03',name:'佐藤 健一',  role:'現場代理人',dept:'港湾部',color:'#c62828',koji:'KJ-2026-003',cert:'1級港湾施工管理技士',certOk:false,hire:'2005年'},
+  {id:'W04',name:'中村 美咲',  role:'現場代理人',dept:'建築部',color:'#2e7d32',koji:'KJ-2026-004',cert:'2級建築施工管理技士',certOk:true,hire:'2015年'},
+  {id:'W05',name:'鈴木 一郎',  role:'副現場代理人',dept:'土木部',color:'#e65100',koji:'KJ-2026-005',cert:'1級土木施工管理技士',certOk:true,hire:'2008年'},
+  {id:'W06',name:'高橋 誠',    role:'現場代理人',dept:'電気設備部',color:'#546e7a',koji:'KJ-2026-006',cert:'1級電気工事施工管理技士',certOk:true,hire:'2012年'},
+  {id:'W07',name:'伊藤 大輔',  role:'現場代理人',dept:'建築部',color:'#6a1b9a',koji:'KJ-2026-007',cert:'1級建築施工管理技士',certOk:true,hire:'2009年'},
+  {id:'W08',name:'渡辺 裕子',  role:'現場代理人',dept:'道路部',color:'#00695c',koji:'KJ-2026-008',cert:'1級道路施工管理技士',certOk:false,hire:'2016年'},
+  {id:'W09',name:'木村 浩二',  role:'作業員',dept:'建築部',color:'#37474f',koji:'KJ-2026-001',cert:'足場作業主任者',certOk:true,hire:'2018年'},
+  {id:'W10',name:'吉田 良一',  role:'作業員',dept:'土木部',color:'#4a148c',koji:'KJ-2026-002',cert:'玉掛技能講習修了',certOk:true,hire:'2020年'},
+  {id:'W11',name:'小林 雄大',  role:'作業員',dept:'建築部',color:'#1a237e',koji:'KJ-2026-001',cert:'足場作業主任者',certOk:true,hire:'2019年'},
+];
+
+const NIPPO=[
+  {date:'2026-03-23',proj:'KJ-2026-001',reporter:'田中 太郎', content:'2F内装クロス貼り（40㎡完了）。明日は西側を着手予定。',weather:'fine', count:8,note:''},
+  {date:'2026-03-23',proj:'KJ-2026-002',reporter:'山田 花子', content:'市行き車軌アスファルト舗装。延長80m完了。転圧確認済み。',weather:'fine', count:12,note:''},
+  {date:'2026-03-23',proj:'KJ-2026-003',reporter:'佐藤 健一', content:'上部構造補強材取付工事。資材不足のため一部工程遅延中。',weather:'cloud',count:15,note:'alert'},
+  {date:'2026-03-23',proj:'KJ-2026-005',reporter:'鈴木 一郎', content:'根固めブロック設置（6本完了）。コンクリート打設準備中。',weather:'fine', count:25,note:''},
+  {date:'2026-03-22',proj:'KJ-2026-001',reporter:'田中 太郎', content:'2F床材フローリング貼り完了（全面）。養生テープ施工。',weather:'cloud',count:10,note:''},
+  {date:'2026-03-22',proj:'KJ-2026-002',reporter:'山田 花子', content:'復旧作業：路盤地盤・転圧・舗設地盤処理実施。',weather:'fine', count:10,note:''},
+  {date:'2026-03-22',proj:'KJ-2026-003',reporter:'佐藤 健一', content:'落橋防止装置補強工事。鋼材溶接率100%。上部面補強確認了。',weather:'fine', count:18,note:''},
+  {date:'2026-03-22',proj:'KJ-2026-007',reporter:'伊藤 大輔', content:'鉄筋組立工事機械稼働。第3基準置完了。合格。',weather:'fine', count:30,note:''},
+  {date:'2026-03-20',proj:'KJ-2026-001',reporter:'木村 浩二', content:'資材搬入・補足。クロス材の一部不足を確認→部日発注済み。',weather:'rain', count:6,note:'mat'},
+  {date:'2026-03-20',proj:'KJ-2026-002',reporter:'吉田 良一', content:'既設舗装合成工事。一部現場地盤処理→置教地盤処理実施。',weather:'cloud',count:8,note:''},
+  {date:'2026-03-21',proj:'KJ-2026-003',reporter:'佐藤 健一', content:'代替資材手配完と協議。4/1入荷予定で確定。',weather:'cloud',count:10,note:''},
+];
+
+// URL params
+const params=new URLSearchParams(location.search);
+const pid=params.get('id')||'KJ-2026-001';
+const initTab=params.get('tab')||'detail';
+const p=P.find(x=>x.id===pid)||P[0];
+const fmt=n=>n.toLocaleString('ja-JP');
+const pd=s=>{const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d);};
+
+// Init header
+document.getElementById('hdrName').textContent=p.name;
+document.getElementById('hdrId').textContent=p.id;
+const sb=document.getElementById('hdrStatus');
+sb.textContent={active:'施工中',upcoming:'着工予定',delayed:'遅延',completed:'完了'}[p.status];
+sb.className='status-badge sb-'+p.status;
+document.getElementById('metaBar').innerHTML=
+  `<span class="meta-item"><span class="meta-label">発注者</span><span class="meta-val">${p.client}</span></span>`+
+  `<span class="meta-item"><span class="meta-label">現場代理人</span><span class="meta-val">${p.mgr}</span></span>`+
+  `<span class="meta-item"><span class="meta-label">現場</span><span class="meta-val">${p.loc}</span></span>`+
+  `<span class="meta-item"><span class="meta-label">業種</span><span class="meta-val">${p.cat}</span></span>`+
+  `<span class="meta-item"><span class="meta-label">工期</span><span class="meta-val">${p.s}〜${p.e}</span></span>`+
+  `<span class="meta-item"><span class="meta-label">進捗</span><span class="meta-val">${p.prog}%</span></span>`;
+document.title=p.name+' ｜ kintone連携';
+
+// Tab switch
+function switchTab(tab){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+  document.querySelectorAll('.tab-pane').forEach(pane=>pane.classList.toggle('active',pane.id==='pane-'+tab));
+}
+
+// Build detail pane
+function buildDetail(){
+  const budgetPct=p.budget>0?Math.round(p.spent/p.budget*100):0;
+  const el=document.getElementById('pane-detail');
+  el.innerHTML=`
+  <div class="progress-card">
+    <h3>工事進捗率</h3>
+    <div class="prog-bar-wrap"><div class="prog-bar-fill" style="width:${p.prog}%;background:${STATUS_COLORS[p.status]}">${p.prog}%</div></div>
+    <div class="prog-label"><span>0%</span><span>目標: 100%</span></div>
+  </div>
+  <div class="progress-card">
+    <h3>予算消化率</h3>
+    <div class="prog-bar-wrap"><div class="prog-bar-fill" style="width:${budgetPct}%;background:${budgetPct>90?'#c62828':'#e65100'}">${budgetPct}%</div></div>
+    <div class="prog-label"><span>消化: ¥${fmt(p.spent)}</span><span>予算: ¥${fmt(p.budget)}</span></div>
+  </div>
+  <div class="section-title">基本情報</div>
+  <div class="info-grid">
+    <div class="info-card"><div class="info-card-label">発注者</div><div class="info-card-val">${p.client}</div></div>
+    <div class="info-card"><div class="info-card-label">現場代理人</div><div class="info-card-val">${p.mgr}</div></div>
+    <div class="info-card"><div class="info-card-label">業種カテゴリ</div><div class="info-card-val">${p.cat}</div></div>
+    <div class="info-card"><div class="info-card-label">現場住所</div><div class="info-card-val">${p.loc}</div></div>
+    <div class="info-card"><div class="info-card-label">着工日</div><div class="info-card-val">${p.s}</div></div>
+    <div class="info-card"><div class="info-card-label">竣工予定日</div><div class="info-card-val">${p.e}</div></div>
+    <div class="info-card"><div class="info-card-label">稼働人工数</div><div class="info-card-val">${p.wk} 人工</div></div>
+    <div class="info-card"><div class="info-card-label">工事番号</div><div class="info-card-val">${p.id}</div></div>
+  </div>
+  ${p.cam?`
+  <div class="section-title">現場カメラ</div>
+  <div class="cam-section">
+    <button class="cam-live-btn" onclick="openCam('${p.cam}','${p.name}')" title="現場ライブカメラを開く">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M15 10l4.553-2.529A1 1 0 0121 8.44v7.12a1 1 0 01-1.447.889L15 14v-4z" fill="#fff"/><rect x="2" y="6" width="13" height="13" rx="2" fill="#fff"/></svg>
+    </button>
+    <div class="cam-info">
+      <h4>現場ライブカメラ</h4>
+      <p>クリックするとリアルタイム映像を確認できます</p>
+    </div>
+  </div>`:''}
+  `;
+}
+
+// Build schedule pane
+function buildSchedule(){
+  const phases=getPhases(p.id);
+  const pStart=pd(p.s),pEnd=pd(p.e);
+  const total=pEnd-pStart+86400000;
+  const barPct=(s,e)=>{
+    const start=Math.max(pd(s)-pStart,0)/total*100;
+    const width=(pd(e)-pd(s)+86400000)/total*100;
+    return{left:start.toFixed(1),width:Math.min(width,100-start).toFixed(1)};
+  };
+  const phaseCols=['#1565c0','#00838f','#546e7a','#2e7d32','#6a1b9a','#e65100','#c62828','#00695c'];
+  const statusLabel={done:'完了',active:'施工中',plan:'着工予定',delayed:'遅延'};
+  const statusCls={done:'ps-done',active:'ps-active',plan:'ps-plan',delayed:'ps-delayed'};
+
+  let rows='';
+  phases.forEach((ph,i)=>{
+    const bp=barPct(ph.s,ph.e);
+    const color=phaseCols[i%8];
+    const hasWbs=ph.wbs&&ph.wbs.length>0;
+    rows+=`
+    <div class="phase-row${ph.status==='active'?' expanded':''}" onclick="toggleWbs(this,'wbs-${i}')">
+      <div class="phase-cell phase-name">${hasWbs?`<span class="expand-icon${ph.status==='active'?' active':''}">▶</span>`:''}${ph.name}</div>
+      <div class="phase-cell phase-date">${ph.s.slice(5)}</div>
+      <div class="phase-cell phase-date">${ph.e.slice(5)}</div>
+      <div class="phase-cell" style="padding:4px 8px;">
+        <div class="phase-chart" style="width:100%">
+          <div class="phase-bar-done" style="left:${bp.left}%;width:${(parseFloat(bp.width)*ph.prog/100).toFixed(1)}%;background:${color};opacity:0.9"></div>
+          <div class="phase-bar" style="left:${bp.left}%;width:${bp.width}%;border:2px solid ${color};background:transparent;border-radius:3px;"></div>
+        </div>
+      </div>
+      <div class="phase-cell phase-status-cell"><span class="phase-status ${statusCls[ph.status]||'ps-plan'}">${statusLabel[ph.status]||ph.status}</span></div>
+    </div>`;
+    if(hasWbs){
+      let wbsRows='<div class="wbs-header-row"><div></div><div>作業内容</div><div>開始日</div><div>終了日</div><div>担当 / 進捗チャート</div><div>進捗</div></div>';
+      ph.wbs.forEach(w=>{
+        const wb=barPct(w.s,w.e);
+        const wPct=Math.round((pd(w.s)-pd(ph.s))/(pd(ph.e)-pd(ph.s)+86400000)*100);
+        wbsRows+=`<div class="wbs-row">
+          <div class="wbs-cell wbs-indent">└</div>
+          <div class="wbs-cell" style="font-weight:600">${w.name}</div>
+          <div class="wbs-cell phase-date">${w.s.slice(5)}</div>
+          <div class="wbs-cell phase-date">${w.e.slice(5)}</div>
+          <div class="wbs-cell" style="padding:4px 8px;flex-direction:column;align-items:flex-start;gap:2px;">
+            <span style="font-size:11px;color:#888">${w.worker}</span>
+            <div class="phase-chart" style="width:100%;height:12px;">
+              <div style="position:absolute;top:0;left:${wb.left}%;width:${(parseFloat(wb.width)*w.prog/100).toFixed(1)}%;height:12px;background:${color};border-radius:2px;opacity:0.85"></div>
+              <div style="position:absolute;top:0;left:${wb.left}%;width:${wb.width}%;height:12px;border:1.5px solid ${color};border-radius:2px;"></div>
+            </div>
+          </div>
+          <div class="wbs-cell" style="justify-content:center;font-weight:700;color:${w.prog===100?'#2e7d32':color}">${w.prog}%</div>
+        </div>`;
+      });
+      rows+=`<div class="wbs-container${ph.status==='active'?' open':''}" id="wbs-${i}">${wbsRows}</div>`;
+    }
+  });
+
+  document.getElementById('pane-schedule').innerHTML=`
+  <div style="margin-bottom:12px;font-size:13px;color:#555;">工期: <b>${p.s}</b> 〜 <b>${p.e}</b>　（チャートは工期全体に対する相対位置）</div>
+  <div class="sch-col-label">
+    <div>工事名</div><div>開始日</div><div>終了日</div><div>進捗チャート</div><div style="text-align:center">状況</div>
+  </div>
+  ${rows}
+  `;
+}
+
+function toggleWbs(rowEl,wbsId){
+  const wbs=document.getElementById(wbsId);
+  if(!wbs)return;
+  const open=wbs.classList.toggle('open');
+  rowEl.classList.toggle('expanded',open);
+}
+
+// Build report pane
+function buildReport(){
+  const nippo=NIPPO.filter(n=>n.proj===p.id);
+  const wIco={fine:'☀️',cloud:'☁️',rain:'🌧'};
+  const wCls={fine:'w-fine',cloud:'w-cloud',rain:'w-rain'};
+  let rows=nippo.map(n=>`
+    <tr>
+      <td style="white-space:nowrap;font-weight:600">${n.date}</td>
+      <td>${n.reporter}</td>
+      <td style="max-width:320px">${n.content}</td>
+      <td><span class="weather-badge ${wCls[n.weather]}">${wIco[n.weather]} ${n.weather==='fine'?'晴れ':n.weather==='cloud'?'曇り':'雨'}</span></td>
+      <td style="text-align:center;font-weight:700">${n.count}名</td>
+      <td>${n.note==='alert'?'<span class="alert-badge">⚠ 材料不足</span>':n.note==='mat'?'<span class="note-badge">対応済</span>':''}</td>
+    </tr>`).join('');
+  if(!rows)rows='<tr><td colspan="6" style="text-align:center;color:#999;padding:24px;">日報データがありません</td></tr>';
+  document.getElementById('pane-report').innerHTML=`
+  <div class="report-actions">
+    <button class="btn-primary">＋ 日報を書く</button>
+    <span class="report-count">全 <b>${nippo.length}</b> 件</span>
+  </div>
+  <table class="data-table">
+    <thead><tr><th>日付</th><th>報告者</th><th>作業内容</th><th>天候</th><th>人数</th><th>特記事項</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+// Build worker pane
+function buildWorker(){
+  const workers=WORKERS.filter(w=>w.koji.includes(p.id));
+  let rows=workers.map(w=>`
+    <tr>
+      <td><div style="display:flex;align-items:center;gap:8px;"><div class="avatar" style="background:${w.color}">${w.name[0]}</div><span style="font-weight:700">${w.name}</span></div></td>
+      <td>${w.role}</td>
+      <td>${w.dept}</td>
+      <td style="max-width:180px;font-size:12px">${w.cert}</td>
+      <td>${w.certOk?'<span class="cred-ok">✓ 有効</span>':'<span class="cred-exp">⚠ 確認要</span>'}</td>
+      <td>${w.hire}</td>
+    </tr>`).join('');
+  if(!rows)rows='<tr><td colspan="6" style="text-align:center;color:#999;padding:24px;">作業員データがありません</td></tr>';
+  document.getElementById('pane-worker').innerHTML=`
+  <div class="worker-actions">
+    <button class="btn-primary">＋ 作業員登録</button>
+    <span class="worker-count">全 <b>${workers.length}</b> 名</span>
+  </div>
+  <table class="data-table">
+    <thead><tr><th>氏名</th><th>役職</th><th>部署</th><th>主要資格</th><th>資格状況</th><th>入社年</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+buildDetail();buildSchedule();buildReport();buildWorker();
+
+document.querySelectorAll('.tab-btn').forEach(b=>{b.addEventListener('click',()=>switchTab(b.dataset.tab));});
+switchTab(initTab);
+
+function openCam(url,name){
+  document.getElementById('camTitle').textContent=name+'　現場ライブカメラ';
+  document.getElementById('camFrame').src=url;
+  document.getElementById('camModal').style.display='flex';
+  document.body.style.overflow='hidden';
+}
+function closeCam(){
+  document.getElementById('camModal').style.display='none';
+  document.getElementById('camFrame').src='';
+  document.body.style.overflow='';
+}
+document.getElementById('camModal').addEventListener('click',ev=>{if(ev.target===document.getElementById('camModal'))closeCam();});
+</script>
+</body>
+</html>
