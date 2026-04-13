@@ -54,6 +54,10 @@ body { font-family:'Noto Sans JP','Hiragino Kaku Gothic ProN',sans-serif; backgr
 .hc.sun{color:#c62828;} .hc.sat{color:#1565c0;}
 .hc.today-hc{background:rgba(230,81,0,0.14)!important;color:#e65100!important;font-weight:900;}
 
+/* Fix: remove double border before biko column */
+.wb-header .hc:nth-last-child(3),
+.wb-subheader .hc:nth-last-child(3){border-right:none;}
+
 /* Rows */
 .wb-rows{overflow-y:auto;max-height:580px;}
 .wb-rows::-webkit-scrollbar{width:6px;}
@@ -143,6 +147,31 @@ body { font-family:'Noto Sans JP','Hiragino Kaku Gothic ProN',sans-serif; backgr
 .cam-frame-wrap{position:relative;padding-bottom:56.25%;}
 #camFrame{position:absolute;inset:0;width:100%;height:100%;border:none;}
 
+/* ─── 社員配属表 ─── */
+.mode-btn{padding:9px 18px;border:2px solid #546e7a;border-radius:8px;background:#fff;font-family:inherit;font-size:14px;font-weight:700;color:#546e7a;cursor:pointer;transition:all 0.15s;min-height:44px;white-space:nowrap;}
+.mode-btn.active{background:#546e7a;color:#fff;border-color:#546e7a;}
+.mode-btn:hover:not(.active){background:#eceff1;}
+#wbHaizoku{display:none;}
+.haizoku-dept-block{margin-bottom:2px;}
+.haizoku-thead{display:grid;grid-template-columns:220px 1fr 90px 120px;background:rgba(228,226,214,0.9);border-bottom:2px solid #555;}
+.haizoku-th{padding:7px 10px;font-weight:900;font-size:13px;color:#111;border-right:1px solid rgba(150,110,50,0.3);}
+.haizoku-th:last-child{border-right:none;}
+.haizoku-project{display:flex;border-bottom:1.5px solid #b8b4a8;}
+.haizoku-project:last-child{border-bottom:none;}
+.haizoku-project:hover{background:rgba(21,101,192,0.04);}
+.haizoku-koji{width:220px;flex-shrink:0;padding:10px 10px;border-right:2px solid #777;display:flex;align-items:center;font-size:13px;font-weight:800;color:#111;background:rgba(234,232,220,0.55);line-height:1.4;}
+.haizoku-workers{flex:1;display:flex;flex-direction:column;}
+.haizoku-wrow{display:grid;grid-template-columns:1fr 90px 120px;border-bottom:1px solid rgba(150,110,50,0.15);min-height:42px;}
+.haizoku-wrow:last-child{border-bottom:none;}
+.haizoku-wrow:hover{background:rgba(21,101,192,0.06);}
+.haizoku-wc{padding:8px 10px;font-size:13px;border-right:1px solid rgba(150,110,50,0.15);display:flex;align-items:center;}
+.haizoku-wc:last-child{border-right:none;}
+.haizoku-wname{font-weight:700;font-size:14px;color:#111;}
+.haizoku-role{font-size:12px;color:#555;}
+.haizoku-note{font-size:12px;color:#1565c0;font-weight:600;}
+.haizoku-dept-sep{display:flex;align-items:center;gap:8px;background:rgba(200,200,190,0.7);border-top:2.5px solid #555;border-bottom:2.5px solid #555;padding:5px 12px;font-size:13px;font-weight:900;color:#333;letter-spacing:0.1em;}
+.haizoku-dept-sep::before,.haizoku-dept-sep::after{content:'';flex:1;height:1.5px;background:#888;}
+
 .tooltip{position:fixed;background:#fff;border:1.5px solid #ccc;border-radius:6px;padding:8px 12px;font-size:12px;pointer-events:none;z-index:9999;opacity:0;transition:opacity 0.12s;box-shadow:0 3px 12px rgba(0,0,0,0.12);}
 .tooltip.show{opacity:1;}
 .tt-n{font-weight:700;color:#111;}.tt-s{font-size:11px;color:#888;margin-top:2px;}
@@ -170,6 +199,7 @@ body { font-family:'Noto Sans JP','Hiragino Kaku Gothic ProN',sans-serif; backgr
     <button class="vt active" data-v="month">月間</button>
     <button class="vt" data-v="year">年間</button>
   </div>
+  <button class="mode-btn" id="modeBtn" onclick="toggleMode()">👥 社員配属表</button>
   <div class="kt-badge">
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="#e65100" stroke-width="2.5"/><circle cx="12" cy="12" r="3" fill="#e65100"/></svg>
     kintone連携中
@@ -195,11 +225,12 @@ body { font-family:'Noto Sans JP','Hiragino Kaku Gothic ProN',sans-serif; backgr
   <div class="wb-clip wb-clip-r"></div>
   <div class="wb-board">
     <div class="wb-layout">
-      <div class="wb-title">月行事予定表</div>
+      <div class="wb-title" id="wbTitle">月行事予定表</div>
       <div class="wb-grid-area" id="wbGrid">
         <div class="wb-header"    id="wbHeader"></div>
         <div class="wb-subheader" id="wbSubHeader"></div>
         <div class="wb-rows"      id="wbRows"></div>
+        <div id="wbHaizoku"></div>
       </div>
     </div>
   </div>
@@ -402,6 +433,107 @@ function closeCam(){
   document.body.style.overflow='';
 }
 document.getElementById('camModal').addEventListener('click',ev=>{if(ev.target===document.getElementById('camModal'))closeCam();});
+
+// ─── 社員配属表データ ───
+const HAIZOKU=[
+  {dept:'本店土木',color:'#1565c0',projects:[
+    {id:'KJ-2026-002',name:'天文館通り 道路拡幅工事',workers:[
+      {name:'山田 花子',role:'現場代理人',note:'1土木'},
+      {name:'吉田 良一',role:'作業員',    note:'玉掛'},
+      {name:'古田 浩',  role:'作業員',    note:''},
+    ]},
+    {id:'KJ-2026-003',name:'桜島フェリーターミナル 耐震補強',workers:[
+      {name:'佐藤 健一',role:'現場代理人',note:'1港湾'},
+      {name:'前田 次郎',role:'作業員',    note:''},
+      {name:'川口 誠二',role:'作業員',    note:''},
+    ]},
+    {id:'KJ-2026-005',name:'甲突川 護岸修繕工事',workers:[
+      {name:'鈴木 一郎',role:'副現場代理人',note:'1土木'},
+      {name:'松田 三郎',role:'作業員',      note:''},
+    ]},
+    {id:'KJ-2026-008',name:'指宿スカイライン 法面補修',workers:[
+      {name:'渡辺 裕子',role:'現場代理人',note:'1道路'},
+      {name:'西田 公介',role:'作業員',    note:''},
+    ]},
+  ]},
+  {dept:'本店建築',color:'#2e7d32',projects:[
+    {id:'KJ-2026-001',name:'鹿児島市役所 本庁舎改修工事',workers:[
+      {name:'田中 太郎',role:'現場代理人',note:'1建築'},
+      {name:'木村 浩二',role:'作業員',    note:'足場主任'},
+      {name:'小林 雄大',role:'作業員',    note:'足場'},
+      {name:'森田 隆',  role:'作業員',    note:''},
+    ]},
+    {id:'KJ-2026-004',name:'城山展望台 休憩施設新築',workers:[
+      {name:'中村 美咲',role:'現場代理人',note:'2建築'},
+      {name:'原田 純',  role:'作業員',    note:''},
+    ]},
+    {id:'KJ-2026-007',name:'谷山駅前 再開発ビル基礎工事',workers:[
+      {name:'伊藤 大輔',role:'現場代理人',note:'1建築'},
+      {name:'中島 隆',  role:'作業員',    note:''},
+      {name:'荒木 俊介',role:'作業員',    note:''},
+    ]},
+    {id:'KJ-2026-006',name:'鴨池運動公園 照明LED化',workers:[
+      {name:'高橋 誠',  role:'現場代理人',note:'1電気'},
+    ]},
+  ]},
+];
+
+function renderHaizoku(){
+  const ct=document.getElementById('wbHaizoku');ct.innerHTML='';
+  HAIZOKU.forEach((section,si)=>{
+    if(si>0){const sep=document.createElement('div');sep.className='haizoku-dept-sep';sep.textContent=section.dept;ct.appendChild(sep);}
+    else{const sep=document.createElement('div');sep.className='haizoku-dept-sep';sep.textContent=section.dept;ct.appendChild(sep);}
+
+    const thead=document.createElement('div');thead.className='haizoku-thead';
+    ['工事名','氏名','役職','備考'].forEach(t=>{const d=document.createElement('div');d.className='haizoku-th';d.textContent=t;thead.appendChild(d);});
+    ct.appendChild(thead);
+
+    const block=document.createElement('div');block.className='haizoku-dept-block';
+    section.projects.forEach(proj=>{
+      const row=document.createElement('div');row.className='haizoku-project';
+      row.onclick=()=>location.href=`kintone.html?id=${proj.id}`;
+      row.style.cursor='pointer';
+
+      const kojiCell=document.createElement('div');kojiCell.className='haizoku-koji';
+      kojiCell.style.borderLeft=`4px solid ${section.color}`;
+      kojiCell.textContent=proj.name;
+      row.appendChild(kojiCell);
+
+      const wCol=document.createElement('div');wCol.className='haizoku-workers';
+      proj.workers.forEach(w=>{
+        const wr=document.createElement('div');wr.className='haizoku-wrow';
+        const nc=document.createElement('div');nc.className='haizoku-wc';
+        nc.innerHTML=`<span class="haizoku-wname">${w.name}</span>`;
+        const rc=document.createElement('div');rc.className='haizoku-wc haizoku-role';rc.textContent=w.role;
+        const bc=document.createElement('div');bc.className='haizoku-wc haizoku-note';bc.textContent=w.note;
+        wr.appendChild(nc);wr.appendChild(rc);wr.appendChild(bc);
+        wCol.appendChild(wr);
+      });
+      row.appendChild(wCol);
+      block.appendChild(row);
+    });
+    ct.appendChild(block);
+  });
+}
+
+let boardMode='gantt';
+function toggleMode(){
+  boardMode=boardMode==='gantt'?'haizoku':'gantt';
+  const isH=boardMode==='haizoku';
+  document.getElementById('modeBtn').classList.toggle('active',isH);
+  document.getElementById('modeBtn').textContent=isH?'📊 ガントチャート':'👥 社員配属表';
+  document.getElementById('wbHeader').style.display=isH?'none':'';
+  document.getElementById('wbSubHeader').style.display=isH?'none':'';
+  document.getElementById('wbRows').style.display=isH?'none':'';
+  document.getElementById('wbHaizoku').style.display=isH?'block':'none';
+  document.getElementById('wbTitle').textContent=isH?'社員配属表':'月行事予定表';
+  // ナビ・フィルター・凡例を切り替え
+  document.getElementById('prevBtn').disabled=isH;
+  document.getElementById('nextBtn').disabled=isH;
+  document.getElementById('prevBtn').style.opacity=isH?'0.3':'1';
+  document.getElementById('nextBtn').style.opacity=isH?'0.3':'1';
+  if(isH) renderHaizoku();
+}
 
 document.getElementById('prevBtn').onclick=()=>{if(view==='week')vDate.setDate(vDate.getDate()-7);else if(view==='month')vDate.setMonth(vDate.getMonth()-1);else vDate.setFullYear(vDate.getFullYear()-1);render();};
 document.getElementById('nextBtn').onclick=()=>{if(view==='week')vDate.setDate(vDate.getDate()+7);else if(view==='month')vDate.setMonth(vDate.getMonth()+1);else vDate.setFullYear(vDate.getFullYear()+1);render();};
