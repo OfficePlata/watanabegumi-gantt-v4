@@ -82,14 +82,14 @@ body {
 .wb-subheader{border-bottom:1.5px solid #666;background:rgba(234,232,220,0.65);}
 .hc{padding:6px 2px;text-align:center;font-weight:900;font-size:13px;color:#111;border-right:1px solid rgba(150,110,50,0.3);overflow:hidden;white-space:nowrap;}
 .hc:last-child{border-right:none;}
-.hc.biko{grid-column:-3/-2;border-left:2.5px solid #333;font-size:14px;}
+.hc.biko{grid-column:-3/-2;font-size:14px;}
 .hc.ko{grid-column:-2/-1;font-size:14px;}
 .hc.sun{color:#c62828;} .hc.sat{color:#1565c0;}
 .hc.today-hc{background:rgba(230,81,0,0.14)!important;color:#e65100!important;font-weight:900;}
 
-/* Fix: remove double border before biko column */
-.wb-header .hc:nth-last-child(3),
-.wb-subheader .hc:nth-last-child(3){border-right:none;}
+/* Border alignment: explicit last-day class (reliable vs nth-last-child) */
+.hc.last-day{border-right:none;}
+.hc.biko{border-left:2.5px solid #555;}  /* unified with row-biko */
 
 /* Rows — flex fill remaining height */
 .wb-rows{flex:1;overflow-y:auto;min-height:0;}
@@ -107,7 +107,7 @@ body {
 .wb-row.status-completed{ background:rgba(0,0,0,0.04); }
 
 .row-gantt{grid-column:1 / -3;position:relative;overflow:hidden;}
-.row-biko{grid-column:-3/-2;border-left:2.5px solid #555;display:flex;align-items:center;justify-content:center;}
+.row-biko{grid-column:-3/-2;border-left:2.5px solid #555;display:flex;align-items:center;justify-content:center;padding:6px 4px;}
 .row-ko{grid-column:-2/-1;}
 
 /* Separators */
@@ -167,7 +167,8 @@ body {
 
 /* Camera thumbnail button */
 .cam-btn{
-  width:72px;height:46px;border-radius:6px;border:2px solid #c62828;
+  width:calc(100% - 8px);aspect-ratio:16/9;
+  border-radius:6px;border:2px solid #c62828;
   background:#111 center/cover no-repeat;
   cursor:pointer;flex-shrink:0;position:relative;z-index:5;overflow:hidden;
   box-shadow:0 2px 8px rgba(0,0,0,0.4);transition:transform 0.12s,box-shadow 0.12s;
@@ -381,19 +382,20 @@ function renderHeader(c,tpl){
   const hdr=document.getElementById('wbHeader'),sub=document.getElementById('wbSubHeader');
   hdr.innerHTML='';sub.innerHTML='';setTpl(hdr,tpl);
   const mk=(txt,cls)=>{const d=document.createElement('div');d.className='hc '+cls;d.innerHTML=txt;return d;};
-  c.cols.forEach(col=>{
+  c.cols.forEach((col,i)=>{
     const dow=col.getDay(),isToday=col.toDateString()===TODAY.toDateString();
     let cls='',txt='';
     if(c.type==='month'){txt=col.getDate();cls=dow===0?'sun':dow===6?'sat':'';}
     else if(c.type==='week'){txt=`${DOW[dow]}<br><span style="font-size:11px;font-weight:500">${col.getMonth()+1}/${col.getDate()}</span>`;cls=dow===0?'sun':dow===6?'sat':'';}
     else{txt=MON[col.getMonth()];}
     if(isToday)cls+=' today-hc';
+    if(i===c.cols.length-1)cls+=' last-day'; // remove right border on last day col
     hdr.appendChild(mk(txt,cls.trim()));
   });
   hdr.appendChild(mk('備','biko'));hdr.appendChild(mk('考','ko'));
   if(c.sub){
     sub.style.display='';setTpl(sub,tpl);
-    c.cols.forEach(col=>{const dow=col.getDay();const el=mk(DOW[dow],dow===0?'sun':dow===6?'sat':'');el.style.fontSize='12px';sub.appendChild(el);});
+    c.cols.forEach((col,i)=>{const dow=col.getDay();let cls=(dow===0?'sun':dow===6?'sat':'')+(i===c.cols.length-1?' last-day':'');const el=mk(DOW[dow],cls.trim());el.style.fontSize='12px';sub.appendChild(el);});
     sub.appendChild(mk('','biko'));sub.appendChild(mk('','ko'));
   }else sub.style.display='none';
 }
