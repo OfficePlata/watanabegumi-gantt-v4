@@ -212,22 +212,28 @@ body {
 .mode-btn:hover:not(.active){background:#eceff1;}
 #wbHaizoku{display:none;flex:1;overflow-y:auto;min-height:0;}
 .haizoku-dept-block{margin-bottom:2px;}
-.haizoku-thead{display:grid;grid-template-columns:220px 1fr 90px 120px;background:rgba(228,226,214,0.9);border-bottom:2px solid #555;}
+.haizoku-thead{display:grid;grid-template-columns:200px 130px 70px 60px 1fr;background:rgba(228,226,214,0.9);border-bottom:2px solid #555;}
 .haizoku-th{padding:7px 10px;font-weight:900;font-size:13px;color:#111;border-right:1px solid rgba(150,110,50,0.3);}
 .haizoku-th:last-child{border-right:none;}
 .haizoku-project{display:flex;border-bottom:1.5px solid #b8b4a8;}
 .haizoku-project:last-child{border-bottom:none;}
 .haizoku-project:hover{background:rgba(21,101,192,0.04);}
-.haizoku-koji{width:220px;flex-shrink:0;padding:10px 10px;border-right:2px solid #777;display:flex;align-items:center;font-size:13px;font-weight:800;color:#111;background:rgba(234,232,220,0.55);line-height:1.4;}
-.haizoku-workers{flex:1;display:flex;flex-direction:column;}
-.haizoku-wrow{display:grid;grid-template-columns:1fr 90px 120px;border-bottom:1px solid rgba(150,110,50,0.15);min-height:42px;}
+.haizoku-koji{width:200px;flex-shrink:0;padding:10px 10px;border-right:2px solid #777;display:flex;align-items:center;font-size:13px;font-weight:800;color:#111;background:rgba(234,232,220,0.55);line-height:1.4;}
+.haizoku-workers{flex:1;display:flex;flex-direction:column;min-width:0;}
+.haizoku-wrow{display:grid;grid-template-columns:130px 70px 60px 1fr;border-bottom:1px solid rgba(150,110,50,0.15);min-height:44px;}
 .haizoku-wrow:last-child{border-bottom:none;}
 .haizoku-wrow:hover{background:rgba(21,101,192,0.06);}
-.haizoku-wc{padding:8px 10px;font-size:13px;border-right:1px solid rgba(150,110,50,0.15);display:flex;align-items:center;}
+.haizoku-wc{padding:6px 10px;font-size:13px;border-right:1px solid rgba(150,110,50,0.15);display:flex;align-items:center;}
 .haizoku-wc:last-child{border-right:none;}
 .haizoku-wname{font-weight:700;font-size:14px;color:#111;}
 .haizoku-role{font-size:12px;color:#555;}
 .haizoku-note{font-size:12px;color:#1565c0;font-weight:600;}
+/* Worker gantt */
+.haizoku-gantt-cell{position:relative;padding:0 8px;display:flex;align-items:center;}
+.hgbar-bg{position:absolute;left:8px;right:8px;top:50%;transform:translateY(-50%);height:4px;background:rgba(0,0,0,0.08);border-radius:2px;}
+.hgbar{position:absolute;top:50%;transform:translateY(-50%);height:18px;border-radius:4px;opacity:0.88;box-shadow:0 1px 4px rgba(0,0,0,0.2);display:flex;align-items:center;justify-content:flex-end;padding-right:5px;overflow:hidden;min-width:4px;}
+.hgbar-label{font-size:10px;font-weight:700;color:#fff;white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,0.5);pointer-events:none;}
+.hgbar-today{position:absolute;top:0;bottom:0;width:2px;background:rgba(230,81,0,0.7);z-index:2;}
 .haizoku-dept-sep{display:flex;align-items:center;gap:8px;background:rgba(200,200,190,0.7);border-top:2.5px solid #555;border-bottom:2.5px solid #555;padding:5px 12px;font-size:13px;font-weight:900;color:#333;letter-spacing:0.1em;}
 .haizoku-dept-sep::before,.haizoku-dept-sep::after{content:'';flex:1;height:1.5px;background:#888;}
 
@@ -503,75 +509,123 @@ document.getElementById('camModal').addEventListener('click',ev=>{if(ev.target==
 const HAIZOKU=[
   {dept:'本店土木',color:'#1565c0',projects:[
     {id:'KJ-2026-002',name:'天文館通り 道路拡幅工事',workers:[
-      {name:'山田 花子',role:'現場代理人',note:'1土木'},
-      {name:'吉田 良一',role:'作業員',    note:'玉掛'},
-      {name:'古田 浩',  role:'作業員',    note:''},
+      {name:'山田 花子',role:'現場代理人',note:'1土木', s:'2026-01-15',e:'2026-04-15'},
+      {name:'吉田 良一',role:'作業員',    note:'玉掛',  s:'2026-02-01',e:'2026-04-15'},
+      {name:'古田 浩',  role:'作業員',    note:'',      s:'2026-02-15',e:'2026-04-10'},
     ]},
     {id:'KJ-2026-003',name:'桜島フェリーターミナル 耐震補強',workers:[
-      {name:'佐藤 健一',role:'現場代理人',note:'1港湾'},
-      {name:'前田 次郎',role:'作業員',    note:''},
-      {name:'川口 誠二',role:'作業員',    note:''},
+      {name:'佐藤 健一',role:'現場代理人',note:'1港湾', s:'2025-11-01',e:'2026-04-14'},
+      {name:'前田 次郎',role:'作業員',    note:'',      s:'2026-01-10',e:'2026-04-14'},
+      {name:'川口 誠二',role:'作業員',    note:'',      s:'2026-02-01',e:'2026-03-31'},
     ]},
     {id:'KJ-2026-005',name:'甲突川 護岸修繕工事',workers:[
-      {name:'鈴木 一郎',role:'副現場代理人',note:'1土木'},
-      {name:'松田 三郎',role:'作業員',      note:''},
+      {name:'鈴木 一郎',role:'副現場代理人',note:'1土木',s:'2026-03-01',e:'2026-06-30'},
+      {name:'松田 三郎',role:'作業員',      note:'',    s:'2026-03-15',e:'2026-06-20'},
     ]},
     {id:'KJ-2026-008',name:'指宿スカイライン 法面補修',workers:[
-      {name:'渡辺 裕子',role:'現場代理人',note:'1道路'},
-      {name:'西田 公介',role:'作業員',    note:''},
+      {name:'渡辺 裕子',role:'現場代理人',note:'1道路', s:'2026-04-15',e:'2026-06-15'},
+      {name:'西田 公介',role:'作業員',    note:'',      s:'2026-04-15',e:'2026-06-10'},
     ]},
   ]},
   {dept:'本店建築',color:'#2e7d32',projects:[
     {id:'KJ-2026-001',name:'鹿児島市役所 本庁舎改修工事',workers:[
-      {name:'田中 太郎',role:'現場代理人',note:'1建築'},
-      {name:'木村 浩二',role:'作業員',    note:'足場主任'},
-      {name:'小林 雄大',role:'作業員',    note:'足場'},
-      {name:'森田 隆',  role:'作業員',    note:''},
+      {name:'田中 太郎',role:'現場代理人',note:'1建築', s:'2026-02-10',e:'2026-05-30'},
+      {name:'木村 浩二',role:'作業員',    note:'足場主任',s:'2026-02-10',e:'2026-04-30'},
+      {name:'小林 雄大',role:'作業員',    note:'足場',  s:'2026-02-20',e:'2026-04-20'},
+      {name:'森田 隆',  role:'作業員',    note:'',      s:'2026-03-01',e:'2026-05-15'},
     ]},
     {id:'KJ-2026-004',name:'城山展望台 休憩施設新築',workers:[
-      {name:'中村 美咲',role:'現場代理人',note:'2建築'},
-      {name:'原田 純',  role:'作業員',    note:''},
+      {name:'中村 美咲',role:'現場代理人',note:'2建築', s:'2026-04-01',e:'2026-08-31'},
+      {name:'原田 純',  role:'作業員',    note:'',      s:'2026-04-15',e:'2026-08-20'},
     ]},
     {id:'KJ-2026-007',name:'谷山駅前 再開発ビル基礎工事',workers:[
-      {name:'伊藤 大輔',role:'現場代理人',note:'1建築'},
-      {name:'中島 隆',  role:'作業員',    note:''},
-      {name:'荒木 俊介',role:'作業員',    note:''},
+      {name:'伊藤 大輔',role:'現場代理人',note:'1建築', s:'2026-01-20',e:'2026-07-31'},
+      {name:'中島 隆',  role:'作業員',    note:'',      s:'2026-02-01',e:'2026-07-15'},
+      {name:'荒木 俊介',role:'作業員',    note:'',      s:'2026-03-01',e:'2026-07-31'},
     ]},
     {id:'KJ-2026-006',name:'鴨池運動公園 照明LED化',workers:[
-      {name:'高橋 誠',  role:'現場代理人',note:'1電気'},
+      {name:'高橋 誠',  role:'現場代理人',note:'1電気', s:'2025-12-01',e:'2026-02-28'},
     ]},
   ]},
 ];
 
 function renderHaizoku(){
   const ct=document.getElementById('wbHaizoku');ct.innerHTML='';
-  HAIZOKU.forEach((section,si)=>{
-    if(si>0){const sep=document.createElement('div');sep.className='haizoku-dept-sep';sep.textContent=section.dept;ct.appendChild(sep);}
-    else{const sep=document.createElement('div');sep.className='haizoku-dept-sep';sep.textContent=section.dept;ct.appendChild(sep);}
+
+  HAIZOKU.forEach(section=>{
+    const sep=document.createElement('div');sep.className='haizoku-dept-sep';sep.textContent=section.dept;ct.appendChild(sep);
 
     const thead=document.createElement('div');thead.className='haizoku-thead';
-    ['工事名','氏名','役職','備考'].forEach(t=>{const d=document.createElement('div');d.className='haizoku-th';d.textContent=t;thead.appendChild(d);});
+    ['工事名','氏名','役職','資格','配属期間'].forEach(t=>{
+      const d=document.createElement('div');d.className='haizoku-th';d.textContent=t;thead.appendChild(d);
+    });
     ct.appendChild(thead);
 
     const block=document.createElement('div');block.className='haizoku-dept-block';
     section.projects.forEach(proj=>{
+      // Get project dates from P array
+      const pData=P.find(x=>x.id===proj.id);
+      const pStart=pd(pData?.s||'2026-01-01');
+      const pEnd=pd(pData?.e||'2026-12-31');
+      // Extend timeline by 10% on each side for context
+      const totalMs=pEnd-pStart||1;
+      const tStart=new Date(pStart.getTime()-totalMs*0.05);
+      const tEnd  =new Date(pEnd.getTime()  +totalMs*0.05);
+      const tRange=tEnd-tStart;
+
       const row=document.createElement('div');row.className='haizoku-project';
-      row.onclick=()=>location.href=`kintone.html?id=${proj.id}`;
-      row.style.cursor='pointer';
+      row.onclick=()=>location.href=`kintone.html?id=${proj.id}`;row.style.cursor='pointer';
 
       const kojiCell=document.createElement('div');kojiCell.className='haizoku-koji';
       kojiCell.style.borderLeft=`4px solid ${section.color}`;
-      kojiCell.textContent=proj.name;
+      // Show project dates under name
+      kojiCell.innerHTML=`<div><div style="font-size:13px;font-weight:800;color:#111;line-height:1.4">${proj.name}</div><div style="font-size:11px;color:#888;margin-top:2px">${pData?.s||''}〜${pData?.e||''}</div></div>`;
       row.appendChild(kojiCell);
 
       const wCol=document.createElement('div');wCol.className='haizoku-workers';
       proj.workers.forEach(w=>{
         const wr=document.createElement('div');wr.className='haizoku-wrow';
+
         const nc=document.createElement('div');nc.className='haizoku-wc';
         nc.innerHTML=`<span class="haizoku-wname">${w.name}</span>`;
         const rc=document.createElement('div');rc.className='haizoku-wc haizoku-role';rc.textContent=w.role;
         const bc=document.createElement('div');bc.className='haizoku-wc haizoku-note';bc.textContent=w.note;
         wr.appendChild(nc);wr.appendChild(rc);wr.appendChild(bc);
+
+        // Gantt cell
+        const gc=document.createElement('div');gc.className='haizoku-gantt-cell';
+        // Background track
+        const bg=document.createElement('div');bg.className='hgbar-bg';gc.appendChild(bg);
+
+        if(w.s&&w.e){
+          const wS=pd(w.s),wE=pd(w.e);
+          const left=Math.max((wS-tStart)/tRange*100,0);
+          const right=Math.min((wE-tStart)/tRange*100,100);
+          const width=Math.max(right-left,0.5);
+
+          const bar=document.createElement('div');bar.className='hgbar';
+          bar.style.left=`calc(${left}% + 8px)`;
+          bar.style.width=`calc(${width}% - 2px)`;
+          bar.style.background=section.color;
+
+          // Date label inside bar
+          const dayCount=Math.round((wE-wS)/86400000);
+          if(width>6){
+            const lbl=document.createElement('span');lbl.className='hgbar-label';
+            lbl.textContent=`${w.s.slice(5)}〜${w.e.slice(5)}`;
+            bar.appendChild(lbl);
+          }
+          gc.appendChild(bar);
+
+          // Today line
+          if(TODAY>=tStart&&TODAY<=tEnd){
+            const todayPct=(TODAY-tStart)/tRange*100;
+            const tl=document.createElement('div');tl.className='hgbar-today';
+            tl.style.left=`calc(${todayPct}% + 8px)`;
+            gc.appendChild(tl);
+          }
+        }
+        wr.appendChild(gc);
         wCol.appendChild(wr);
       });
       row.appendChild(wCol);
