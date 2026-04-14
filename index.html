@@ -91,10 +91,15 @@ body {
 .hc.last-day{border-right:none;}
 .hc.biko{border-left:2.5px solid #555;}  /* unified with row-biko */
 
-/* Rows — flex fill remaining height */
-.wb-rows{flex:1;overflow-y:auto;min-height:0;}
-.wb-rows::-webkit-scrollbar{width:6px;}
-.wb-rows::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.18);border-radius:3px;}
+/* Scroll on grid-area (header + rows share same width = no misalignment) */
+.wb-grid-area{overflow-y:auto;}
+.wb-grid-area::-webkit-scrollbar{width:6px;}
+.wb-grid-area::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.18);border-radius:3px;}
+/* Sticky headers */
+.wb-header{position:sticky;top:0;z-index:20;}
+.wb-subheader{position:sticky;top:33px;z-index:19;}
+/* Rows — no own scroll */
+.wb-rows{overflow:visible;}
 .wb-row{border-bottom:1px solid #b8b4a8;min-height:120px;cursor:pointer;transition:filter 0.12s;position:relative;}
 .wb-row:last-child{border-bottom:none;}
 .wb-row:hover{filter:brightness(0.97);}
