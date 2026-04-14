@@ -107,7 +107,8 @@ body {
 .wb-row.status-completed{ background:rgba(0,0,0,0.04); }
 
 .row-gantt{grid-column:1 / -3;position:relative;overflow:hidden;}
-.row-biko{grid-column:-3/-2;border-left:2.5px solid #555;display:flex;align-items:center;justify-content:center;padding:6px 4px;}
+.row-biko{grid-column:-3/-2;border-left:2.5px solid #555;display:flex;align-items:center;justify-content:center;padding:4px 3px;}
+.row-ko{display:none;}
 .row-ko{grid-column:-2/-1;}
 
 /* Separators */
@@ -373,7 +374,7 @@ function sepPcts(c){
 function render(){
   const c=cfg();
   document.getElementById('periodLabel').textContent=c.label;
-  const tpl=`repeat(${c.cols.length},1fr) 88px 44px`;
+  const tpl=`repeat(${c.cols.length},1fr) 130px 0px`;
   renderHeader(c,tpl);renderRows(c,tpl);
 }
 const setTpl=(el,tpl)=>{el.style.gridTemplateColumns=tpl;};
@@ -392,7 +393,7 @@ function renderHeader(c,tpl){
     if(i===c.cols.length-1)cls+=' last-day'; // remove right border on last day col
     hdr.appendChild(mk(txt,cls.trim()));
   });
-  hdr.appendChild(mk('備','biko'));hdr.appendChild(mk('考','ko'));
+  hdr.appendChild(mk('','biko'));hdr.appendChild(mk('','ko'));
   if(c.sub){
     sub.style.display='';setTpl(sub,tpl);
     c.cols.forEach((col,i)=>{const dow=col.getDay();let cls=(dow===0?'sun':dow===6?'sat':'')+(i===c.cols.length-1?' last-day':'');const el=mk(DOW[dow],cls.trim());el.style.fontSize='12px';sub.appendChild(el);});
